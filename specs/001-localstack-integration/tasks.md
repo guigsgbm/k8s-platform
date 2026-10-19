@@ -24,7 +24,7 @@ The repository already has `applications/`, a root Argo CD Application watching 
 
 **Purpose**: Prepare the out-of-Git prerequisite needed before Argo CD starts LocalStack.
 
-- [ ] T001 Replace the `--from-literal` token example in `specs/001-localstack-integration/quickstart.md` with a non-echoing prompt and stdin-based Secret creation procedure; ensure no token value is placed in shell history, process arguments, logs, or Git.
+- [X] T001 Replace the `--from-literal` token example in `specs/001-localstack-integration/quickstart.md` with a non-echoing prompt and stdin-based Secret creation procedure; ensure no token value is placed in shell history, process arguments, logs, or Git.
 - [ ] T002 Before publishing the LocalStack Application, create the `localstack` namespace and `localstack-auth-token` Secret with key `auth-token` by following `specs/001-localstack-integration/quickstart.md`; verify the key exists without displaying its value.
 
 **Checkpoint**: The token Secret exists in the target namespace and no secret value has entered the repository.
@@ -37,9 +37,9 @@ The repository already has `applications/`, a root Argo CD Application watching 
 
 ### Implementation
 
-- [ ] T003 [P] [US1] Add `applications/localstack.yaml` as an Argo CD Application for the official `localstack` chart `0.7.1` and image `localstack/localstack:2026.10.0`; set namespace `localstack`, `ClusterIP`, `persistence.enabled: false`, the token `secretKeyRef`, planned resource requests/limits, automated sync, self-healing, deliberate pruning, and `CreateNamespace=true`.
-- [ ] T004 [P] [US1] Add a LocalStack section to `README.md` describing the GitOps-managed application, pinned releases, out-of-Git token prerequisite, Argo CD status checks, and where to find the usage and cleanup runbook.
-- [ ] T005 [US1] Render the chart from the values in `applications/localstack.yaml` with Helm and correct any errors; confirm the rendered image is pinned, `LOCALSTACK_AUTH_TOKEN` is sourced from the Secret, the Service is `ClusterIP` on port 4566, and persistence is disabled.
+- [X] T003 [P] [US1] Add `applications/localstack.yaml` as an Argo CD Application for the official `localstack` chart `0.7.1` and image `localstack/localstack:2026.10.0`; set namespace `localstack`, `ClusterIP`, `persistence.enabled: false`, the token `secretKeyRef`, planned resource requests/limits, automated sync, self-healing, deliberate pruning, and `CreateNamespace=true`.
+- [X] T004 [P] [US1] Add a LocalStack section to `README.md` describing the GitOps-managed application, pinned releases, out-of-Git token prerequisite, Argo CD status checks, and where to find the usage and cleanup runbook.
+- [X] T005 [US1] Render the chart from the values in `applications/localstack.yaml` with Helm and correct any errors; confirm the rendered image is pinned, `LOCALSTACK_AUTH_TOKEN` is sourced from the Secret, the Service is `ClusterIP` on port 4566, and persistence is disabled.
 - [ ] T006 [US1] Publish `applications/localstack.yaml` to the configured Git branch and verify the root Application discovers it and LocalStack becomes ready in Minikube; record the actual status-check or troubleshooting details in `README.md` if they differ from `specs/001-localstack-integration/quickstart.md`.
 
 ## Phase 4: User Story 2 - Use the local AWS-compatible endpoint for study (Priority: P1)
@@ -50,7 +50,7 @@ The repository already has `applications/`, a root Argo CD Application watching 
 
 ### Implementation
 
-- [ ] T007 [US2] Complete `specs/001-localstack-integration/quickstart.md` and `specs/001-localstack-integration/contracts/localstack-endpoint.md`: replace the AWS CLI image placeholder with a published fixed tag; document the cluster DNS endpoint, workstation port-forward, health check, dummy credentials, and an AWS-compatible smoke test.
+- [X] T007 [US2] Complete `specs/001-localstack-integration/quickstart.md` and `specs/001-localstack-integration/contracts/localstack-endpoint.md`: replace the AWS CLI image placeholder with a published fixed tag; document the cluster DNS endpoint, workstation port-forward, health check, dummy credentials, and an AWS-compatible smoke test.
 - [ ] T008 [US2] Run the in-cluster smoke scenario in `specs/001-localstack-integration/quickstart.md`; verify the AWS CLI reaches `http://localstack.localstack.svc.cluster.local:4566`, returns the emulator account, and creates/lists a disposable test resource without real AWS credentials.
 - [ ] T009 [US2] Run the workstation access scenario in `specs/001-localstack-integration/quickstart.md`; verify port-forward access to `localhost:4566` and confirm `kubectl get ingress,svc -n localstack` shows no ingress or `NodePort`.
 
@@ -62,14 +62,14 @@ The repository already has `applications/`, a root Argo CD Application watching 
 
 ### Implementation
 
-- [ ] T010 [P] [US3] Document in `README.md` and `specs/001-localstack-integration/quickstart.md` that simulated resources are ephemeral and lost on pod restart, and explain that removing the manifest alone does not remove the Application because the root Application has `prune: false`; provide the intentional cascade-and-namespace cleanup sequence.
+- [X] T010 [P] [US3] Document in `README.md` and `specs/001-localstack-integration/quickstart.md` that simulated resources are ephemeral and lost on pod restart, and explain that removing the manifest alone does not remove the Application because the root Application has `prune: false`; provide the intentional cascade-and-namespace cleanup sequence.
 - [ ] T011 [US3] Using only a disposable simulated resource, follow the restart/reset scenario in `specs/001-localstack-integration/quickstart.md` and confirm the resource is gone after LocalStack restarts; do not cascade-delete the Application or namespace as part of this validation unless the lab owner explicitly intends to remove the installation.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 **Purpose**: Ensure the final desired state and operator documentation agree.
 
-- [ ] T012 Review `applications/localstack.yaml`, `README.md`, and all files under `specs/001-localstack-integration/`; run `git diff --check` and confirm there are no plaintext secrets, floating `latest` tags, or instructions that expose the endpoint beyond the local lab.
+- [X] T012 Review `applications/localstack.yaml`, `README.md`, and all files under `specs/001-localstack-integration/`; run `git diff --check` and confirm there are no plaintext secrets, floating `latest` tags, or instructions that expose the endpoint beyond the local lab.
 
 ## Dependencies & Execution Order
 

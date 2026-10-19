@@ -1,0 +1,13 @@
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
+.env*
+.kube/
+kubeconfig*
+secrets/
+*.secret.yaml
+*.secret.yml
+*.key

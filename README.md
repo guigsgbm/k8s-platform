@@ -82,3 +82,20 @@ Argo CD renders the Helm chart to Kubernetes resources; it does not create a Hel
 3. Argo CD detects the new manifest and creates the application. Use **Refresh** in the UI to request an immediate check instead of waiting for the next repository poll.
 
 Automated sync and self-healing are enabled for the root and Crossplane applications. Pruning is disabled, so deleting a manifest will not automatically delete its application or resources.
+
+## LocalStack study environment
+
+LocalStack is managed by [applications/localstack.yaml](./applications/localstack.yaml) through the root Argo CD application. It pins the official chart at `0.7.1` and the `localstack/localstack` image at `2026.10.0`; the chart's AWS CLI test image is pinned to `amazon/aws-cli:2.38.1`.
+
+Current LocalStack releases require an account auth token. Before Argo CD starts the pod, create the `localstack` namespace and the `localstack-auth-token` Secret (key `auth-token`) outside Git by following [the LocalStack quickstart](./specs/001-localstack-integration/quickstart.md). Never put the token in a manifest, shell argument, log, or commit.
+
+Check reconciliation and workload readiness with:
+
+```sh
+kubectl get applications.argoproj.io -n argocd
+kubectl get pods,svc -n localstack
+```
+
+The endpoint is cluster-internal at `http://localstack.localstack.svc.cluster.local:4566`; use the quickstart's temporary `kubectl port-forward` procedure for workstation access. The quickstart also documents an AWS CLI smoke test and safe removal.
+
+Persistence is disabled, so simulated resources are lost when the pod restarts. The root application has `prune: false`: removing `applications/localstack.yaml` from Git alone does not remove the LocalStack Argo CD application. Follow the quickstart's explicit cascade-delete and namespace cleanup steps when intentionally uninstalling it.

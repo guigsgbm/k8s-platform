@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: localstack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://localstack.github.io/helm-charts
+    chart: localstack
+    targetRevision: 0.7.1
+    helm:
+      releaseName: localstack
+      valuesObject:
+        image:
+          repository: localstack/localstack
+          tag: "2026.10.0"
+          pullPolicy: IfNotPresent
+        extraEnvVars:
+          - name: LOCALSTACK_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: localstack-auth-token
+                key: auth-token
+        service:
+          type: ClusterIP
+        ingress:
+          enabled: false
+        persistence:
+          enabled: false
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            memory: 2Gi
+        mountDind:
+          enabled: false
+        tests:
+          image:
+            repository: amazon/aws-cli
+            tag: "2.38.1"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: localstack
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
