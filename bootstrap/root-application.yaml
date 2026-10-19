@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_USUARIO/k8s-platform.git
+    repoURL: https://github.com/guigsgbm/k8s-platform.git
     targetRevision: main
     path: applications
   destination:
