@@ -1,50 +1,39 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Kubernetes Infrastructure GitOps Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Git Is the Source of Truth
+The repository defines the desired state for platform applications running on Kubernetes. Argo CD reconciles that state. Routine changes must be made in Git rather than applied directly to the cluster. Emergency out-of-band changes must be reconciled back into Git.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Keep the Repository Focused on Platform Infrastructure
+This repository manages Kubernetes infrastructure applications and their deployment configuration, not application workloads. Each managed application must have an explicit Argo CD `Application` manifest under `applications/`, which is watched by the root application.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Reconcile Automatically, Prune Deliberately
+Applications should use automated synchronization and self-healing. Automated pruning is enabled by default so resources removed from Git do not remain unmanaged in the cluster. Disable pruning for an individual application only when deletion could cause data loss or otherwise requires separate lifecycle management; document the reason alongside that application's configuration. Before deleting or renaming a manifest, assess the resources and dependencies that Argo CD may remove.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Keep Secrets Out of Git
+Never commit plaintext credentials, tokens, private keys, or other secret values. Store secret material in an external secrets system and commit only the references and configuration needed to retrieve it. Grant applications and controllers only the access required for their purpose.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Make Deployments Reproducible
+Pin production chart, image, and other upstream dependency versions. Do not use floating references such as `latest` in production. Keep each application's upstream source, version, destination, and relevant sync behavior explicit in its manifest.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VI. Review Changes for Their Cluster Impact
+Before merging or applying a change, manually review its YAML syntax, Kubernetes API/resource compatibility, source and destination, version changes, and synchronization or deletion effects. Use available validators when practical, but CI is not a prerequisite. Changes that can cause data loss or broad cluster impact require particular scrutiny.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+## Repository Constraints
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- The root Argo CD application watches `applications/`; add platform applications there as individual manifests.
+- Keep bootstrap configuration limited to what is needed to install and manage the root application.
+- Document operational assumptions and meaningful exceptions where maintainers can find them.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Change Workflow
+
+- Express desired-state changes as focused, reviewable Git changes.
+- For upgrades, removals, or changes to sync and pruning behavior, assess affected resources and dependencies before applying the change.
+- When an emergency requires a direct cluster change, record the resulting desired state in Git as soon as practical.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution guides the design, implementation, and review of all changes in this repository. Exceptions must be explicit, scoped, and documented with their rationale. Amendments require updating this document and its version and amendment date.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-10-19
