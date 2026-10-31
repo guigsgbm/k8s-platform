@@ -1,0 +1,195 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: xstaticsites.platform.k8s-platform.io
+spec:
+  group: platform.k8s-platform.io
+  names:
+    kind: XStaticSite
+    plural: xstaticsites
+  scope: Namespaced
+  defaultCompositionRef:
+    name: xstaticsite-localstack
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                indexDocument:
+                  type: string
+                  default: index.html
+                  minLength: 1
+                  maxLength: 255
+                  pattern: '^[A-Za-z0-9][A-Za-z0-9._-]*$'
+                errorDocument:
+                  type: string
+                  minLength: 1
+                  maxLength: 1024
+                  pattern: '^[A-Za-z0-9][A-Za-z0-9._/-]*$'
+            status:
+              type: object
+              properties:
+                bucketName:
+                  type: string
+                websiteURL:
+                  type: string
+                  format: uri
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xstaticsite-localstack
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-platform.io/v1alpha1
+    kind: XStaticSite
+  mode: Pipeline
+  pipeline:
+    - step: create-static-site-resources
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: bucket
+            base:
+              apiVersion: s3.aws.m.upbound.io/v1beta1
+              kind: Bucket
+              metadata:
+                annotations: {}
+              spec:
+                managementPolicies:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                forProvider:
+                  forceDestroy: true
+                  region: us-east-1
+                providerConfigRef:
+                  kind: ClusterProviderConfig
+                  name: localstack
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: site-%s
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.id
+                toFieldPath: status.bucketName
+                policy:
+                  fromFieldPath: Optional
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.id
+                toFieldPath: status.websiteURL
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: http://%s.s3-website.localhost.localstack.cloud:4566/
+                policy:
+                  fromFieldPath: Optional
+          - name: website-configuration
+            base:
+              apiVersion: s3.aws.m.upbound.io/v1beta1
+              kind: BucketWebsiteConfiguration
+              spec:
+                managementPolicies:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                forProvider:
+                  region: us-east-1
+                  bucketSelector:
+                    matchControllerRef: true
+                  indexDocument:
+                    suffix: index.html
+                providerConfigRef:
+                  kind: ClusterProviderConfig
+                  name: localstack
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.indexDocument
+                toFieldPath: spec.forProvider.indexDocument.suffix
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.errorDocument
+                toFieldPath: spec.forProvider.errorDocument.key
+                policy:
+                  fromFieldPath: Optional
+          - name: public-access-block
+            base:
+              apiVersion: s3.aws.m.upbound.io/v1beta1
+              kind: BucketPublicAccessBlock
+              spec:
+                managementPolicies:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                forProvider:
+                  region: us-east-1
+                  bucketSelector:
+                    matchControllerRef: true
+                  blockPublicAcls: false
+                  blockPublicPolicy: false
+                  ignorePublicAcls: false
+                  restrictPublicBuckets: false
+                providerConfigRef:
+                  kind: ClusterProviderConfig
+                  name: localstack
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+          - name: bucket-policy
+            base:
+              apiVersion: s3.aws.m.upbound.io/v1beta1
+              kind: BucketPolicy
+              spec:
+                managementPolicies:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                forProvider:
+                  region: us-east-1
+                  bucketSelector:
+                    matchControllerRef: true
+                  policy: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::site-placeholder/*"}]}'
+                providerConfigRef:
+                  kind: ClusterProviderConfig
+                  name: localstack
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.uid
+                toFieldPath: spec.forProvider.policy
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::site-%s/*"}]}'

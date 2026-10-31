@@ -107,3 +107,13 @@ The [AWS S3 provider manifest](./applications/crossplane-aws-s3.yaml) pins both 
 This provider release is for this study lab only: the Upbound Marketplace reports two High and two Low vulnerability findings for each package. Do not use this pin for real AWS resources; review the accepted risk and compatibility evidence in [the provider research](./specs/002-crossplane-s3-localstack/research.md) before publishing.
 
 Follow the [S3 bucket quickstart](./specs/002-crossplane-s3-localstack/quickstart.md) for staged rollout, LocalStack-only smoke testing, troubleshooting, and safe cleanup. No real AWS account or credentials are used.
+
+## Static sites in LocalStack
+
+The namespaced `XStaticSite` API provisions an isolated S3 website bucket and its website configuration, public-access settings, and object-read policy through Crossplane. All provider operations use the existing LocalStack endpoint; anonymous reads are limited to that site's objects inside the lab. LocalStack remains a `ClusterIP` service, and website access requires the documented workstation port-forward. Do not use this lab-only public-read configuration with real AWS or expose LocalStack through a public route.
+
+Site infrastructure readiness does not mean that content has been uploaded. Upload static files separately through the explicit LocalStack S3 endpoint, then verify the reported website URL while the port-forward is active. The bucket name and URL are published in the `XStaticSite` status.
+
+Follow the [static-site quickstart](./specs/003-static-site-hosting/quickstart.md) for staged Function/API/site rollout, content upload, index and error-page checks, isolation testing, failure inspection, and deliberate cleanup. The root Argo CD application has `prune: false`; deleting a declaration from Git alone does not delete its XR or bucket. Deleting the XR also deletes its bucket contents.
+
+Review the [static-site research](./specs/003-static-site-hosting/research.md) before rollout. The feature reuses the lab-only AWS provider `v2.4.0` pin and its accepted Marketplace findings; it is not intended for real AWS resources.
