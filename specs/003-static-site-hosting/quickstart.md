@@ -63,11 +63,11 @@ spec:
   errorDocument: error.html
 ```
 
-Omitting `indexDocument` uses `index.html`; `errorDocument` is optional. Commit and push the declaration so the root Argo CD application creates it. Wait for the XR and all four composed managed resources to report ready; the XR is infrastructure-ready before content is present:
+Omitting `indexDocument` uses `index.html`; `errorDocument` is optional. Commit and push the declaration so the root Argo CD application creates it. Wait for the XR and all five composed managed resources to report ready. The new site already serves a placeholder `index.html`; the XR does not track your own content:
 
 ```sh
 kubectl describe xstaticsite docs-demo -n static-sites
-kubectl get buckets,bucketwebsiteconfigurations,bucketpublicaccessblocks,bucketpolicies \
+kubectl get buckets,bucketwebsiteconfigurations,bucketpublicaccessblocks,bucketpolicies,objects.s3.aws.m.upbound.io \
   -n static-sites
 ```
 
@@ -81,7 +81,7 @@ Start the local-only port-forward in a terminal:
 kubectl port-forward svc/localstack 4566:4566 -n localstack
 ```
 
-In another terminal, upload the test content through the explicit LocalStack endpoint. Replace `<bucket-name>` with the XR's `status.bucketName`:
+In another terminal, first confirm the placeholder page, then (optionally) upload your own content through the explicit LocalStack endpoint. Uploading a file with the index document's key can be reverted by Crossplane, so use a different index name or other keys for custom files. Replace `<bucket-name>` with the XR's `status.bucketName`:
 
 ```sh
 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 \
@@ -115,4 +115,4 @@ Create a second declaration with a different name and verify its generated bucke
 
 - Deleting the XR deletes the generated bucket and its contents. Back up any files that must be retained before cleanup.
 - Wait for Crossplane to delete that XR's managed resources and LocalStack bucket before removing the shared Composition or function. Do not remove the shared provider configuration, provider packages, or dummy Secret while another site or S3 resource uses them.
-- LocalStack persistence is disabled. A restart loses bucket contents; declared infrastructure is reconciled again, but users must re-upload their site files.
+- LocalStack persistence is disabled. A restart loses bucket contents; declared infrastructure and the placeholder index page are reconciled again, but other uploaded files must be re-uploaded.

@@ -16,7 +16,7 @@ The API is a namespaced `XStaticSite` composite resource:
 | `status.bucketName` | Generated LocalStack bucket name, `site-<XR UID>` |
 | `status.websiteURL` | `http://<bucket-name>.s3-website.localhost.localstack.cloud:4566/` |
 
-The XR reports infrastructure readiness only. Users upload site content separately.
+The XR reports infrastructure readiness and includes a minimal placeholder index page. Users upload their own site content separately; the Composition does not manage it.
 
 ## Composition
 
@@ -26,6 +26,7 @@ The Composition uses the pinned `function-patch-and-transform:v0.11.2` package a
 2. `BucketWebsiteConfiguration`, selected from the bucket controlled by the same XR, with the configured index and optional error document.
 3. `BucketPublicAccessBlock`, selected from that same bucket, with all four public-access blocking/restriction fields set to `false`.
 4. `BucketPolicy`, selected from that same bucket, allowing only `s3:GetObject` on `arn:aws:s3:::<bucket-name>/*` for website clients.
+5. `Object`, selected from that same bucket, with key taken from `spec.indexDocument`, content type `text/html`, and a fixed inline placeholder page. It lets a new site respond immediately; it does not deliver real site content.
 
 Each managed resource references the existing cluster-scoped `ClusterProviderConfig/localstack`. S3, S3 Control, and any provider operations required by reconciliation must remain directed to `http://localstack.localstack.svc.cluster.local:4566`. The provider's existing Secret contains only dummy LocalStack credentials and remains outside Git.
 
@@ -55,4 +56,4 @@ Then open the URL reported in `status.websiteURL`. Verify that the hostname reso
 4. Verify the XR and all composed resources are ready and verify content through LocalStack's website endpoint.
 5. To remove a site, remove its declaration from Git and explicitly delete the XR. Wait for its composed resources and LocalStack bucket to be deleted.
 
-The root Argo CD application has `prune: false`; deleting a Git file alone does not delete the Kubernetes object. Do not remove the Composition or Function while any XR depends on them. LocalStack is ephemeral, so its bucket contents are lost on restart and must be uploaded again.
+The root Argo CD application has `prune: false`; deleting a Git file alone does not delete the Kubernetes object. Do not remove the Composition or Function while any XR depends on them. LocalStack is ephemeral, so uploaded content is lost on restart; Crossplane recreates the placeholder index page, but any other files must be uploaded again.
