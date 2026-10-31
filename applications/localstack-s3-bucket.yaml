@@ -1,0 +1,46 @@
+apiVersion: aws.m.upbound.io/v1beta1
+kind: ClusterProviderConfig
+metadata:
+  name: localstack
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: localstack-aws-credentials
+      key: creds
+  endpoint:
+    url:
+      type: Static
+      static: http://localstack.localstack.svc.cluster.local:4566
+    services:
+      - s3
+      - s3control
+      - sts
+    hostnameImmutable: true
+    source: Custom
+  skip_credentials_validation: true
+  skip_region_validation: true
+  s3_use_path_style: true
+  skip_metadata_api_check: true
+  skip_requesting_account_id: true
+---
+apiVersion: s3.aws.m.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  name: localstack-s3-smoke
+  namespace: crossplane-system
+  annotations:
+    crossplane.io/external-name: localstack-s3-smoke
+spec:
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+    - Delete
+    - LateInitialize
+  forProvider:
+    region: us-east-1
+  providerConfigRef:
+    kind: ClusterProviderConfig
+    name: localstack
