@@ -99,3 +99,11 @@ kubectl get pods,svc -n localstack
 The endpoint is cluster-internal at `http://localstack.localstack.svc.cluster.local:4566`; use the quickstart's temporary `kubectl port-forward` procedure for workstation access. The quickstart also documents an AWS CLI smoke test and safe removal.
 
 Persistence is disabled, so simulated resources are lost when the pod restarts. The root application has `prune: false`: removing `applications/localstack.yaml` from Git alone does not remove the LocalStack Argo CD application. Follow the quickstart's explicit cascade-delete and namespace cleanup steps when intentionally uninstalling it.
+
+## Crossplane S3 buckets in LocalStack
+
+The [AWS S3 provider manifest](./applications/crossplane-aws-s3.yaml) pins both Upbound packages to `v2.4.0`, compatible with the lab's Crossplane `v2.4.2`. The second-stage [LocalStack bucket manifest](./applications/localstack-s3-bucket.yaml) configures S3, S3 Control, and STS to use only the in-cluster LocalStack endpoint and declares a sample bucket. Do not publish that second-stage manifest until both providers are healthy and the dummy-credentials Secret has been created outside Git.
+
+This provider release is for this study lab only: the Upbound Marketplace reports two High and two Low vulnerability findings for each package. Do not use this pin for real AWS resources; review the accepted risk and compatibility evidence in [the provider research](./specs/002-crossplane-s3-localstack/research.md) before publishing.
+
+Follow the [S3 bucket quickstart](./specs/002-crossplane-s3-localstack/quickstart.md) for staged rollout, LocalStack-only smoke testing, troubleshooting, and safe cleanup. No real AWS account or credentials are used.
