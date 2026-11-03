@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: static-sites
+  namespace: argocd
+spec:
+  description: Discovered static-site repositories
+  sourceRepos:
+    - https://github.com/labs-guigsgbm/*
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: site-*
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+      name: site-*
+  namespaceResourceWhitelist:
+    - group: platform.k8s-platform.io
+      kind: XStaticSite

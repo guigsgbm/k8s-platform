@@ -117,3 +117,50 @@ Each new site serves a minimal placeholder `index.html` right away, created by t
 Follow the [static-site quickstart](./specs/003-static-site-hosting/quickstart.md) for staged Function/API/site rollout, content upload, index and error-page checks, isolation testing, failure inspection, and deliberate cleanup. The root Argo CD application has `prune: false`; deleting a declaration from Git alone does not delete its XR or bucket. Deleting the XR also deletes its bucket contents.
 
 Review the [static-site research](./specs/003-static-site-hosting/research.md) before rollout. The feature reuses the lab-only AWS provider `v2.4.0` pin and its accepted Marketplace findings; it is not intended for real AWS resources.
+
+## Static-site discovery
+
+The [discovery manifests](./applications/static-site-discovery.yaml) scan the GitHub organization `labs-guigsgbm` for non-archived repositories with the `backstage-static-site` topic. Repository names must match `^[a-z0-9]([a-z0-9-]{0,56}[a-z0-9])?$`; each discovered repository gets an Application named `site-<repo>` that syncs its default branch's `deploy/` directory into namespace `site-<repo>`. That directory should contain only `XStaticSite` manifests.
+
+Discovery only scans the configured organization. Common reasons a site is not discovered or does not sync:
+
+| Case | Where it appears |
+|------|------------------|
+| Wrong topic, another owner, or archived repository | No `site-<repo>` Application is created. |
+| Repository name fails the rule above | No Application is created. |
+| Missing `deploy/` directory | Application reports `ComparisonError: app path does not exist`. |
+| Invalid manifest | Application reports an `OutOfSync` or sync failure with the validation error. |
+| Disallowed kind or namespace | Application sync failure reports the AppProject denial or the own-namespace policy message. |
+
+Repository access or GitHub API errors appear as an Application `ComparisonError` or an ApplicationSet `ErrorOccurred` condition. List discovered sites with:
+
+```sh
+kubectl -n argocd get applications.argoproj.io | grep '^site-'
+```
+
+Diagnose a site's sync condition and operation message with:
+
+```sh
+kubectl -n argocd get application site-<repo> \
+  -o jsonpath='{.status.conditions}{"\n"}{.status.operationState.message}{"\n"}'
+```
+
+Each scan costs about `1 + N` GitHub API requests for up to 100 organization repositories, where `N` is the number of matching repositories. At the default three-minute interval:
+
+| Access | GitHub limit | Approximate hourly use |
+|--------|--------------|------------------------|
+| Unauthenticated | 60 requests/hour | 20 scans/hour; one matching repo uses about 40 requests, two use about 60. |
+| Authenticated | 5,000 requests/hour | 20 scans/hour at `1 + N` requests per scan. |
+
+For more sites or private repositories, use a fine-grained, read-only token; create its Secret outside Git and reference only the Secret name and key in the ApplicationSet. Increasing `requeueAfterSeconds` also reduces request volume. See the [discovery quickstart](./specs/004-static-site-discovery/quickstart.md) for staged rollout, troubleshooting, and token setup.
+
+### Removing a static site
+
+Repository lifecycle events (untagging, archiving, deletion, or renaming) do not delete the Application, namespace, site, or bucket. To remove a site deliberately:
+
+1. Untag or archive the repository so discovery cannot recreate its Application.
+2. Delete `application site-<repo>` in `argocd`; its resources are retained because the generated Application has no deletion finalizer.
+3. Delete the `XStaticSite` in `site-<repo>` and wait for its bucket to be removed. This irreversibly deletes the bucket contents.
+4. Delete namespace `site-<repo>`.
+
+Pruning remains enabled: removing an `XStaticSite` manifest from the site's `deploy/` directory deletes that resource and its bucket. Removing ordinary managed manifests from `applications/` prunes their resources too. The discovery ApplicationSet is an exception protected by `Prune=false`; removing its Git manifest does not delete the live ApplicationSet, so delete it explicitly when retiring discovery. Follow the [quickstart removal procedure](./specs/004-static-site-discovery/quickstart.md#deliberate-removal-of-a-site) before cleanup.

@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: static-site-discovery
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+    applicationsSync: create-update
+  generators:
+    - scmProvider:
+        github:
+          organization: labs-guigsgbm
+          excludeArchivedRepos: true
+          # tokenRef: {secretName: github-discovery-token, key: token}   # optional, Secret created outside Git
+        cloneProtocol: https
+        requeueAfterSeconds: 180
+        filters:
+          - repositoryMatch: '^[a-z0-9]([a-z0-9-]{0,56}[a-z0-9])?$'
+            labelMatch: '^backstage-static-site$'
+  template:
+    metadata:
+      name: 'site-{{.repository}}'
+    spec:
+      project: static-sites
+      source:
+        repoURL: '{{.url}}'
+        targetRevision: HEAD
+        path: deploy
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'site-{{.repository}}'
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: true
+        syncOptions:
+          - CreateNamespace=true

@@ -1,0 +1,29 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: static-site-own-namespace
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [platform.k8s-platform.io]
+        apiVersions: ['*']
+        operations: [CREATE, UPDATE]
+        resources: [xstaticsites]
+  matchConditions:
+    - name: site-namespace-only
+      expression: object.metadata.namespace.startsWith('site-')
+  validations:
+    - expression: >-
+        !has(object.metadata.annotations) ||
+        !('argocd.argoproj.io/tracking-id' in object.metadata.annotations) ||
+        object.metadata.annotations['argocd.argoproj.io/tracking-id'].startsWith(object.metadata.namespace + ':')
+      message: An XStaticSite in a site namespace may only be deployed by that site's own Application.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: static-site-own-namespace
+spec:
+  policyName: static-site-own-namespace
+  validationActions: [Deny]
