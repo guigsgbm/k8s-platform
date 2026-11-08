@@ -20,6 +20,9 @@ Pin production chart, image, and other upstream dependency versions. Do not use 
 ### VI. Review Changes for Their Cluster Impact
 Before merging or applying a change, manually review its YAML syntax, Kubernetes API/resource compatibility, source and destination, version changes, and synchronization or deletion effects. Use available validators when practical, but CI is not a prerequisite. Changes that can cause data loss or broad cluster impact require particular scrutiny.
 
+### VII. Write Only What the Task Needs (Ponytail)
+Specs, plans, tasks, and manifests must contain only what the task requires. Before adding anything, check in order: does it need to exist, is it already in the repository, does Kubernetes or the existing tooling already provide it. Do not add abstractions, extra dependencies, or speculative configuration. This never justifies removing validation, error handling, security, or accessibility. Agents should apply the `ponytail` skill during planning, tasks, and implementation.
+
 ## Repository Constraints
 
 - The root Argo CD application watches `applications/`; add platform applications there as individual manifests.
@@ -36,4 +39,4 @@ Before merging or applying a change, manually review its YAML syntax, Kubernetes
 
 This constitution guides the design, implementation, and review of all changes in this repository. Exceptions must be explicit, scoped, and documented with their rationale. Amendments require updating this document and its version and amendment date.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-10-19
+**Version**: 1.1.0 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-11-02

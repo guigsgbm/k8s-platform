@@ -81,7 +81,7 @@ Argo CD renders the Helm chart to Kubernetes resources; it does not create a Hel
 2. Commit and push the change to the `main` branch.
 3. Argo CD detects the new manifest and creates the application. Use **Refresh** in the UI to request an immediate check instead of waiting for the next repository poll.
 
-Automated sync and self-healing are enabled for the root and Crossplane applications. Pruning is disabled, so deleting a manifest will not automatically delete its application or resources.
+Automated sync and self-healing are enabled for the root and Crossplane applications. Pruning is enabled, so deleting a manifest from Git deletes its application and, through the application's finalizer, its resources. Assess what a removal will delete before committing it.
 
 ## LocalStack study environment
 
@@ -98,7 +98,7 @@ kubectl get pods,svc -n localstack
 
 The endpoint is cluster-internal at `http://localstack.localstack.svc.cluster.local:4566`; use the quickstart's temporary `kubectl port-forward` procedure for workstation access. The quickstart also documents an AWS CLI smoke test and safe removal.
 
-Persistence is disabled, so simulated resources are lost when the pod restarts. The root application has `prune: false`: removing `applications/localstack.yaml` from Git alone does not remove the LocalStack Argo CD application. Follow the quickstart's explicit cascade-delete and namespace cleanup steps when intentionally uninstalling it.
+Persistence is disabled, so simulated resources are lost when the pod restarts. The root application has `prune: true`: removing `applications/localstack.yaml` from Git removes the LocalStack Argo CD application. Follow the quickstart's cascade-delete and namespace cleanup steps when intentionally uninstalling it.
 
 ## Crossplane S3 buckets in LocalStack
 
@@ -114,7 +114,7 @@ The namespaced `XStaticSite` API provisions an isolated S3 website bucket and it
 
 Each new site serves a minimal placeholder `index.html` right away, created by the Composition. Real static files are not managed by the declaration: upload them separately through the explicit LocalStack S3 endpoint, then verify the reported website URL while the port-forward is active. The bucket name and URL are published in the `XStaticSite` status.
 
-Follow the [static-site quickstart](./specs/003-static-site-hosting/quickstart.md) for staged Function/API/site rollout, content upload, index and error-page checks, isolation testing, failure inspection, and deliberate cleanup. The root Argo CD application has `prune: false`; deleting a declaration from Git alone does not delete its XR or bucket. Deleting the XR also deletes its bucket contents.
+Follow the [static-site quickstart](./specs/003-static-site-hosting/quickstart.md) for staged Function/API/site rollout, content upload, index and error-page checks, isolation testing, failure inspection, and deliberate cleanup. The root Argo CD application has `prune: true`; deleting a declaration from Git deletes its XR and, with it, the bucket contents.
 
 Review the [static-site research](./specs/003-static-site-hosting/research.md) before rollout. The feature reuses the lab-only AWS provider `v2.4.0` pin and its accepted Marketplace findings; it is not intended for real AWS resources.
 
@@ -164,3 +164,9 @@ Repository lifecycle events (untagging, archiving, deletion, or renaming) do not
 4. Delete namespace `site-<repo>`.
 
 Pruning remains enabled: removing an `XStaticSite` manifest from the site's `deploy/` directory deletes that resource and its bucket. Removing ordinary managed manifests from `applications/` prunes their resources too. The discovery ApplicationSet is an exception protected by `Prune=false`; removing its Git manifest does not delete the live ApplicationSet, so delete it explicitly when retiring discovery. Follow the [quickstart removal procedure](./specs/004-static-site-discovery/quickstart.md#deliberate-removal-of-a-site) before cleanup.
+
+## GitHub Actions runners
+
+The [runner Applications](./applications/arc-controller.yaml) and [runner pool](./applications/arc-runner-set.yaml) provide ephemeral in-cluster GitHub Actions runners that can reach LocalStack. The pool uses the organization's `Default` runner group, which allows all repositories except public repositories; the static-site topic does not restrict runner access. Anyone with write access to any non-public repository in `labs-guigsgbm` can run code on a runner, so workflows must follow the documented trigger guard. Create the GitHub token and LocalStack dummy-credential Secrets outside Git. This feature delivers no site workflow.
+
+Pruning is disabled for both runner Applications. Removing their manifests from Git does not remove the resources; follow the [runner quickstart](./specs/005-github-actions-runner/quickstart.md) for staged rollout, credential setup, troubleshooting, and deliberate removal.

@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-02
 
-**Status**: Draft
+**Status**: Approved
 
 **Input**: User description: "Automatic discovery and deployment of static-site repositories by Argo CD. When a GitHub repository is marked as a static site (via the topic `backstage-static-site`), Argo CD must automatically create an Application that syncs that repository's `deploy/` directory into a dedicated namespace, so the XStaticSite declared there is reconciled by Crossplane. Removing the marker must not silently destroy infrastructure."
 
