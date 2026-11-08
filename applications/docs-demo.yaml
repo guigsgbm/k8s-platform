@@ -1,8 +1,0 @@
-apiVersion: platform.k8s-platform.io/v1alpha1
-kind: XStaticSite
-metadata:
-  name: docs-demo
-  namespace: static-sites
-spec:
-  indexDocument: index.html
-  errorDocument: error.html
