@@ -79,7 +79,7 @@ spec:
                   name: localstack
             patches:
               - type: FromCompositeFieldPath
-                fromFieldPath: metadata.uid
+                fromFieldPath: metadata.name
                 toFieldPath: metadata.annotations[crossplane.io/external-name]
                 transforms:
                   - type: string
@@ -186,38 +186,10 @@ spec:
                 fromFieldPath: metadata.namespace
                 toFieldPath: metadata.namespace
               - type: FromCompositeFieldPath
-                fromFieldPath: metadata.uid
+                fromFieldPath: metadata.name
                 toFieldPath: spec.forProvider.policy
                 transforms:
                   - type: string
                     string:
                       type: Format
                       fmt: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::site-%s/*"}]}'
-          - name: index-object
-            base:
-              apiVersion: s3.aws.m.upbound.io/v1beta1
-              kind: Object
-              spec:
-                managementPolicies:
-                  - Observe
-                  - Create
-                  - Update
-                  - Delete
-                  - LateInitialize
-                forProvider:
-                  region: us-east-1
-                  bucketSelector:
-                    matchControllerRef: true
-                  key: index.html
-                  contentType: text/html
-                  content: '<html><body><h1>Hello from a static site</h1></body></html>'
-                providerConfigRef:
-                  kind: ClusterProviderConfig
-                  name: localstack
-            patches:
-              - type: FromCompositeFieldPath
-                fromFieldPath: metadata.namespace
-                toFieldPath: metadata.namespace
-              - type: FromCompositeFieldPath
-                fromFieldPath: spec.indexDocument
-                toFieldPath: spec.forProvider.key
