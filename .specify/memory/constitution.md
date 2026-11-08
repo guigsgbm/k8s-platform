@@ -23,6 +23,9 @@ Before merging or applying a change, manually review its YAML syntax, Kubernetes
 ### VII. Write Only What the Task Needs (Ponytail)
 Specs, plans, tasks, and manifests must contain only what the task requires. Before adding anything, check in order: does it need to exist, is it already in the repository, does Kubernetes or the existing tooling already provide it. Do not add abstractions, extra dependencies, or speculative configuration. This never justifies removing validation, error handling, security, or accessibility. Agents should apply the `ponytail` skill during planning, tasks, and implementation.
 
+### VIII. Learning Lab: Shortest Path to the Goal
+This is a study lab, not production. The end goal is a Backstage template that creates a repository, its code and its infrastructure in one run. Specs, plans and tasks must contain only the work needed to reach that goal. Do not write tasks, success criteria or quickstart stages whose only purpose is to test: no negative/guardrail tests, failure-injection, repeated or load runs, restart/survival checks, or cleanup rehearsals. The only check is the lightest one that shows the feature works, which is normally the real use of it by the next feature, plus a server-side dry-run before applying a manifest. Troubleshooting notes may stay as short reference text. This never removes security controls or secret handling (Principle IV); it only removes proving them by testing.
+
 ## Repository Constraints
 
 - The root Argo CD application watches `applications/`; add platform applications there as individual manifests.
@@ -39,4 +42,4 @@ Specs, plans, tasks, and manifests must contain only what the task requires. Bef
 
 This constitution guides the design, implementation, and review of all changes in this repository. Exceptions must be explicit, scoped, and documented with their rationale. Amendments require updating this document and its version and amendment date.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-11-02
+**Version**: 1.2.0 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-11-08

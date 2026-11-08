@@ -18,7 +18,9 @@ spec:
         github:
           organization: labs-guigsgbm
           excludeArchivedRepos: true
-          # tokenRef: {secretName: github-discovery-token, key: token}   # optional, Secret created outside Git
+          tokenRef:
+            secretName: github-discovery-token
+            key: token
         cloneProtocol: https
         requeueAfterSeconds: 180
         filters:

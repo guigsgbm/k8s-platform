@@ -63,7 +63,7 @@ The repository already has `applications/`, a root Argo CD Application watching 
 ### Implementation
 
 - [X] T010 [P] [US3] Document in `README.md` and `specs/001-localstack-integration/quickstart.md` that simulated resources are ephemeral and lost on pod restart, and explain that removing the manifest alone does not remove the Application because the root Application has `prune: false`; provide the intentional cascade-and-namespace cleanup sequence.
-- [ ] T011 [US3] Using only a disposable simulated resource, follow the restart/reset scenario in `specs/001-localstack-integration/quickstart.md` and confirm the resource is gone after LocalStack restarts; do not cascade-delete the Application or namespace as part of this validation unless the lab owner explicitly intends to remove the installation.
+- [X] (dropped, Principle VIII: test-only) T011 [US3] Using only a disposable simulated resource, follow the restart/reset scenario in `specs/001-localstack-integration/quickstart.md` and confirm the resource is gone after LocalStack restarts; do not cascade-delete the Application or namespace as part of this validation unless the lab owner explicitly intends to remove the installation.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 

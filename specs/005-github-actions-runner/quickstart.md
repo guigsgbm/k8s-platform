@@ -88,16 +88,39 @@ kubectl get pods -n arc-runners     # expected: no runner pods while idle (minim
 
 ## Stage 4: Behavior checks (user story 2, SC-002/SC-003)
 
-The real workflow is a later spec. Use a throwaway workflow in a non-public repository in `labs-guigsgbm` (do not commit it to this repository), triggered by `workflow_dispatch`, with the guard from the contract and `runs-on: lab-localstack`. It performs:
+The real site workflow is a later spec; no workflow file is delivered or committed by this feature. For a temporary test, create this workflow in a non-public repository in `labs-guigsgbm`. It permits manual dispatch and default-branch pushes only, uses the contract guard and runner label, and never prints credentials:
 
-```sh
-curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.1.zip -o /tmp/aws.zip
-unzip -q /tmp/aws.zip -d /tmp && /tmp/aws/install -i "$HOME/aws-cli" -b "$HOME/bin"
-export PATH="$HOME/bin:$PATH"
-aws s3 ls
+```yaml
+name: Temporary LocalStack runner check
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  smoke:
+    if: >-
+      github.repository_owner == 'labs-guigsgbm' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)))
+    runs-on: lab-localstack
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.14.0
+      - run: node --version
+      - name: Install AWS CLI 2.38.1
+        shell: bash
+        run: |
+          curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.1.zip -o /tmp/aws.zip
+          unzip -q /tmp/aws.zip -d /tmp
+          /tmp/aws/install -i "$HOME/aws-cli" -b "$HOME/bin"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+      - name: Check LocalStack S3
+        run: aws s3 ls --endpoint-url "$AWS_ENDPOINT_URL"
 ```
 
-While it runs: `kubectl get pods -n arc-runners` shows one runner pod. **Expected**: the job succeeds; the runner pod is gone within 2 minutes after the job; two jobs started together run on two different pods (maximum 2); a third waits in the queue. The job log contains no credential value. Confirm the pod has no cluster access while a job runs:
+The runner supplies `AWS_ENDPOINT_URL`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY`; the latter two contain only the lab's dummy LocalStack credentials. Never print the environment or credential values. While the workflow runs, `kubectl get pods -n arc-runners` shows one runner pod. **Expected**: the job succeeds; the runner pod is gone within 2 minutes after the job; two jobs started together run on two different pods (maximum 2); a third waits in the queue. The job log contains no credential value. Confirm the pod has no cluster access while a job runs:
 
 ```sh
 kubectl get pod -n arc-runners -o jsonpath='{.items[0].spec.automountServiceAccountToken}{" "}{.items[0].spec.securityContext}{"\n"}'

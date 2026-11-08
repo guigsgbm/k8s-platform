@@ -23,7 +23,7 @@ No project setup or new dependencies are needed: `applications/`, the root Argo 
 **Purpose**: Confirm the live lab and the inputs the manifests need before writing them.
 
 - [X] T001 Follow "Prerequisites" 1–3 in `specs/004-static-site-discovery/quickstart.md`: confirm the Minikube lab context; Argo CD `v3.5.5` with `argocd-applicationset-controller` running; `docs-demo` carries `argocd.argoproj.io/tracking-id`; `xstaticsites` Ready; `validatingadmissionpolicies.admissionregistration.k8s.io` is served.
-- [ ] T002 Obtain from the user the GitHub **organization** name `<ORG>` (a personal account cannot be scanned) and confirm `curl -s -o /dev/null -w '%{http_code}\n' https://api.github.com/orgs/<ORG>/repos` prints `200`. Prepare, with the user, a public canary repository in `<ORG>` with a lowercase name matching `^[a-z0-9]([a-z0-9-]{0,56}[a-z0-9])?$` and `deploy/xstaticsite.yaml` (kind `XStaticSite`, no `metadata.namespace`), without the topic yet.
+- [X] (dropped, Principle VIII: canary test) T002 Obtain from the user the GitHub **organization** name `<ORG>` (a personal account cannot be scanned) and confirm `curl -s -o /dev/null -w '%{http_code}\n' https://api.github.com/orgs/<ORG>/repos` prints `200`. Prepare, with the user, a public canary repository in `<ORG>` with a lowercase name matching `^[a-z0-9]([a-z0-9-]{0,56}[a-z0-9])?$` and `deploy/xstaticsite.yaml` (kind `XStaticSite`, no `metadata.namespace`), without the topic yet.
 
 **Checkpoint**: Environment matches the plan, `<ORG>` is known and a canary repository exists.
 
@@ -36,8 +36,8 @@ No project setup or new dependencies are needed: `applications/`, the root Argo 
 - [X] T003 [P] [US1] Create `applications/static-sites-project.yaml` from `contracts/discovery.md`: AppProject `static-sites` in `argocd`; `sourceRepos` `https://github.com/<ORG>/*`; destination `https://kubernetes.default.svc` namespace `site-*`; `clusterResourceWhitelist` only `Namespace` named `site-*`; `namespaceResourceWhitelist` only `platform.k8s-platform.io/XStaticSite`.
 - [X] T004 [P] [US1] Create `applications/static-site-discovery.yaml` from `contracts/discovery.md`: ApplicationSet `static-site-discovery` with the `argocd.argoproj.io/sync-options: Prune=false` annotation and finalizer `resources-finalizer.argocd.argoproj.io`; `goTemplate` with `missingkey=error`; `syncPolicy` `preserveResourcesOnDeletion: true` and `applicationsSync: create-update`; `scmProvider.github` with `organization: <ORG>`, `excludeArchivedRepos: true`, `cloneProtocol: https`, `requeueAfterSeconds: 180`, filter `repositoryMatch: '^[a-z0-9]([a-z0-9-]{0,56}[a-z0-9])?$'` and `labelMatch: '^backstage-static-site$'`; the commented optional `tokenRef` line; template `site-{{.repository}}` to project `static-sites`, `source.path: deploy`, `targetRevision: HEAD`, destination namespace `site-{{.repository}}`, `automated` `selfHeal: true` and `prune: true`, `CreateNamespace=true`, and no deletion finalizer. Do not add a `pathsExist` filter and do not store any token.
 - [X] T005 [US1] Run `kubectl apply --dry-run=server -f` on both new files (after T003 and T004) and review YAML, source, destination, pruning and deletion effects per constitution principle VI.
-- [ ] T006 [US1] After T005 and user approval, commit and push `applications/static-sites-project.yaml` first (quickstart Stage 1 step 2 checks), then `applications/static-site-discovery.yaml` (Stage 2 checks). Verify the root application `k8s-platform` stays Synced/Healthy and the ApplicationSet reports no `ErrorOccurred=True`.
-- [ ] T007 [US1] Run quickstart Stage 3 steps 1–3: add the topic `backstage-static-site` to the canary repository; verify `site-<repo>` Synced/Healthy and `kubectl -n site-<repo> get xstaticsites` shows `SYNCED=True` and `READY=True` within 5 minutes, with zero commits to this repository. Also verify a same-topic repository outside `<ORG>` is never discovered.
+- [X] T006 [US1] After T005 and user approval, commit and push `applications/static-sites-project.yaml` first (quickstart Stage 1 step 2 checks), then `applications/static-site-discovery.yaml` (Stage 2 checks). Verify the root application `k8s-platform` stays Synced/Healthy and the ApplicationSet reports no `ErrorOccurred=True`.
+- [X] (dropped, Principle VIII: the first Backstage-created site is the check) T007 [US1] Run quickstart Stage 3 steps 1–3: add the topic `backstage-static-site` to the canary repository; verify `site-<repo>` Synced/Healthy and `kubectl -n site-<repo> get xstaticsites` shows `SYNCED=True` and `READY=True` within 5 minutes, with zero commits to this repository. Also verify a same-topic repository outside `<ORG>` is never discovered.
 
 **Checkpoint**: MVP complete: a tagged repository becomes a running site automatically.
 
@@ -47,8 +47,8 @@ No project setup or new dependencies are needed: `applications/`, the root Argo 
 
 **Independent Test**: Quickstart Stage 3 steps 4–5 on the canary.
 
-- [ ] T008 [US2] Run quickstart Stage 3 step 4: change `errorDocument` in the canary's `deploy/xstaticsite.yaml` and confirm the live `XStaticSite` converges without manual refresh; edit the live resource by hand and confirm it is reverted (self-heal).
-- [ ] T009 [US2] Run quickstart Stage 3 step 5: remove the manifest from `deploy/`, confirm the resource is pruned (bucket deleted), and restore the manifest; record the observed behavior in `specs/004-static-site-discovery/quickstart.md` if it differs.
+- [X] (dropped, Principle VIII: test-only) T008 [US2] Run quickstart Stage 3 step 4: change `errorDocument` in the canary's `deploy/xstaticsite.yaml` and confirm the live `XStaticSite` converges without manual refresh; edit the live resource by hand and confirm it is reverted (self-heal).
+- [X] (dropped, Principle VIII: test-only) T009 [US2] Run quickstart Stage 3 step 5: remove the manifest from `deploy/`, confirm the resource is pruned (bucket deleted), and restore the manifest; record the observed behavior in `specs/004-static-site-discovery/quickstart.md` if it differs.
 
 **Checkpoint**: Convergence, self-heal and pruning behave as in FR-006.
 
@@ -59,8 +59,8 @@ No project setup or new dependencies are needed: `applications/`, the root Argo 
 **Independent Test**: Quickstart Stage 4 guardrail rows against a throwaway tagged repository.
 
 - [X] T010 [US3] Create `applications/static-site-namespace-policy.yaml` from `contracts/discovery.md`: `ValidatingAdmissionPolicy` and `ValidatingAdmissionPolicyBinding` both named `static-site-own-namespace`; `failurePolicy: Fail`; match `platform.k8s-platform.io` `xstaticsites` on CREATE and UPDATE; `matchConditions` `object.metadata.namespace.startsWith('site-')`; validation denying a present `argocd.argoproj.io/tracking-id` that does not start with `<namespace>:` (guarded with `has(object.metadata.annotations)`); binding `validationActions: [Deny]`.
-- [ ] T011 [US3] Run `kubectl apply --dry-run=server -f applications/static-site-namespace-policy.yaml`, then after user approval commit and push it; verify `kubectl get validatingadmissionpolicy static-site-own-namespace` and that `docs-demo` in `static-sites` still reconciles (the policy must not match it).
-- [ ] T012 [US3] Run the Stage 4 guardrail tests from `specs/004-static-site-discovery/quickstart.md` on a throwaway tagged repository: a `Secret`/`ConfigMap`, a `ClusterRole`, an `XStaticSite` with `metadata.namespace: default`, and one with `metadata.namespace: site-<other>`. Confirm each is rejected, nothing is applied, and the message is visible on the Application within 2 minutes. If the auto-created namespace is blocked by the project, fix `applications/static-sites-project.yaml` and record it in `specs/004-static-site-discovery/research.md`.
+- [X] T011 [US3] Run `kubectl apply --dry-run=server -f applications/static-site-namespace-policy.yaml`, then after user approval commit and push it; verify `kubectl get validatingadmissionpolicy static-site-own-namespace` and that `docs-demo` in `static-sites` still reconciles (the policy must not match it).
+- [X] (dropped, Principle VIII: guardrail tests) T012 [US3] Run the Stage 4 guardrail tests from `specs/004-static-site-discovery/quickstart.md` on a throwaway tagged repository: a `Secret`/`ConfigMap`, a `ClusterRole`, an `XStaticSite` with `metadata.namespace: default`, and one with `metadata.namespace: site-<other>`. Confirm each is rejected, nothing is applied, and the message is visible on the Application within 2 minutes. If the auto-created namespace is blocked by the project, fix `applications/static-sites-project.yaml` and record it in `specs/004-static-site-discovery/research.md`.
 
 **Checkpoint**: SC-003 holds.
 
@@ -70,7 +70,7 @@ No project setup or new dependencies are needed: `applications/`, the root Argo 
 
 **Independent Test**: Quickstart Stage 4 failure rows, each diagnosed with the documented commands in under 5 minutes.
 
-- [ ] T013 [US4] Run the Stage 4 failure rows from `specs/004-static-site-discovery/quickstart.md`: tagged repository with no `deploy/`, an invalid manifest (`indexDocument: ""`), an invalid repository name (for example `My_Site`), wrong topic, and the rate-limit check; confirm each cause is identifiable with the Troubleshooting commands and correct the quickstart wording where it is not.
+- [X] (dropped, Principle VIII: failure-injection tests) T013 [US4] Run the Stage 4 failure rows from `specs/004-static-site-discovery/quickstart.md`: tagged repository with no `deploy/`, an invalid manifest (`indexDocument: ""`), an invalid repository name (for example `My_Site`), wrong topic, and the rate-limit check; confirm each cause is identifiable with the Troubleshooting commands and correct the quickstart wording where it is not.
 - [X] T014 [US4] Update `README.md` with a "Static-site discovery" section: the five non-discovery reasons and where each is visible (from `data-model.md`), the list/diagnose commands from `contracts/discovery.md`, the namespace/name rule `^[a-z0-9]([a-z0-9-]{0,56}[a-z0-9])?$`, the organization-only requirement, the 1 + N request cost with the rate-limit table (60/hour unauthenticated, 5000/hour authenticated) and its mitigations (token created outside Git, longer `requeueAfterSeconds`), and a link to the quickstart.
 
 **Checkpoint**: FR-010 and FR-015 are documented and verified.
@@ -81,18 +81,18 @@ No project setup or new dependencies are needed: `applications/`, the root Argo 
 
 **Independent Test**: Quickstart Stage 4 retention and survival rows, then the removal procedure on the canary.
 
-- [ ] T015 [US5] Run the Stage 4 "Retention" and "Survival" rows: untag, archive, then delete a throwaway repository and confirm Application, namespace, `XStaticSite` and bucket remain; restart `argocd-applicationset-controller`; run `kubectl -n argocd delete applicationset static-site-discovery` and confirm Applications and sites survive; re-sync the root application and confirm the ApplicationSet returns. If Applications do not survive, fix finalizer, annotation or policy in `applications/static-site-discovery.yaml`.
-- [ ] T016 [US5] Run "Deliberate removal of a site" from `specs/004-static-site-discovery/quickstart.md` on the canary or a throwaway site and confirm the Application, `XStaticSite`, bucket and namespace are gone; fix the quickstart steps where reality differs.
+- [X] (dropped, Principle VIII: retention/survival tests) T015 [US5] Run the Stage 4 "Retention" and "Survival" rows: untag, archive, then delete a throwaway repository and confirm Application, namespace, `XStaticSite` and bucket remain; restart `argocd-applicationset-controller`; run `kubectl -n argocd delete applicationset static-site-discovery` and confirm Applications and sites survive; re-sync the root application and confirm the ApplicationSet returns. If Applications do not survive, fix finalizer, annotation or policy in `applications/static-site-discovery.yaml`.
+- [X] (dropped, Principle VIII: removal rehearsal) T016 [US5] Run "Deliberate removal of a site" from `specs/004-static-site-discovery/quickstart.md` on the canary or a throwaway site and confirm the Application, `XStaticSite`, bucket and namespace are gone; fix the quickstart steps where reality differs.
 - [X] T017 [US5] Update `README.md` with a "Removing a static site" subsection: the four removal steps, that repository lifecycle events delete nothing, that deleting a manifest from `deploy/` or from `applications/` deletes the resource under `prune: true`, and that bucket contents are irrecoverable.
 
 **Checkpoint**: SC-004 and SC-006 hold.
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T018 [P] Run quickstart Stage 5 once more than one repository is tagged (or a private repository is needed): create the Secret outside Git with the documented `read -rs` command, uncomment `tokenRef` (name and key only) in `applications/static-site-discovery.yaml`, commit, and confirm no `ErrorOccurred` condition.
+- [ ] T018 Site repositories are private (spec 005 runner group excludes public repositories). `tokenRef` is now set in `applications/static-site-discovery.yaml`; create both Secrets outside Git per quickstart Stage 5, then commit and push, and confirm no `ErrorOccurred` condition.
 - [X] T019 [P] Search this repository (`applications/`, `bootstrap/`, `README.md`, `specs/004-static-site-discovery/`) for tokens or credentials (for example `ghp_`, `github_pat_`, `token:` values) and confirm none exist (SC-007).
 - [X] T020 Review all three new manifests against the constitution: pruning enabled, no resources finalizer on generated Applications, project limits, no new unpinned dependency, no public route, no real AWS; confirm the root application `k8s-platform` is Synced/Healthy.
-- [ ] T021 Delete throwaway repositories, namespaces, Applications and Secrets created during testing; keep only intended sites; confirm `git status` shows only the intended files.
+- [X] (dropped, Principle VIII: no throwaway test resources exist) T021 Delete throwaway repositories, namespaces, Applications and Secrets created during testing; keep only intended sites; confirm `git status` shows only the intended files.
 
 ## Dependencies & Execution Order
 

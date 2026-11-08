@@ -46,15 +46,28 @@ Run each against a throwaway tagged repository and record the Application messag
 | Survival | restart `argocd-applicationset-controller`; then `kubectl -n argocd delete applicationset static-site-discovery`; then re-sync the root application | Applications and sites survive; the ApplicationSet is recreated |
 | Rate limit | (read-only check) `curl -s https://api.github.com/rate_limit` | remaining requests are sufficient for `1 + N` per 3 minutes |
 
-## Stage 5: Optional token for more than one site
+## Stage 5: Read token for private site repositories
 
-Use when two or more repositories are tagged (see the rate-limit table in [research.md](./research.md)), or a repository is private.
+Required: the runner group of spec 005 excludes public repositories, so site repositories are private. Discovery and Argo CD both need a read token, created outside Git. Create the Secrets **before** pushing the `tokenRef` in `applications/static-site-discovery.yaml`, otherwise the ApplicationSet reports `ErrorOccurred`.
 
-1. Create a fine-grained GitHub token with read-only access to the organization's repositories. Create the Secret without echoing the value or storing it in shell history:
-   `read -rs GH_TOKEN; kubectl -n argocd create secret generic github-discovery-token --from-literal=token="$GH_TOKEN"; unset GH_TOKEN`
-2. Uncomment `tokenRef` in `applications/static-site-discovery.yaml` (name and key only), commit and push.
-3. For private repositories, also register repository credentials in Argo CD outside Git (for example `argocd-repo-creds`).
-4. Verify: the ApplicationSet shows no `ErrorOccurred`; the authenticated rate limit applies.
+1. Create a fine-grained GitHub token: resource owner `labs-guigsgbm`, all repositories, repository permissions **Contents: Read-only** and **Metadata: Read-only**, nothing else. Use a short expiry and note the renewal date.
+2. Create both Secrets without echoing the value or storing it in shell history:
+
+   ```sh
+   set +x
+   read -rsp "GitHub read token: " GH_TOKEN; echo
+   kubectl -n argocd create secret generic github-discovery-token --from-literal=token="$GH_TOKEN"
+   kubectl -n argocd create secret generic labs-guigsgbm-repo-creds \
+     --from-literal=type=git \
+     --from-literal=url=https://github.com/labs-guigsgbm \
+     --from-literal=username=x-access-token \
+     --from-literal=password="$GH_TOKEN"
+   kubectl -n argocd label secret labs-guigsgbm-repo-creds argocd.argoproj.io/secret-type=repo-creds
+   unset GH_TOKEN
+   ```
+
+3. Commit and push the `tokenRef` already present in `applications/static-site-discovery.yaml`.
+4. Check: `kubectl -n argocd get applicationset static-site-discovery -o jsonpath='{.status.conditions}'` shows no `ErrorOccurred=True`.
 
 ## Troubleshooting
 
