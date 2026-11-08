@@ -53,7 +53,7 @@ description: "Task list for the static-site repository contract"
 - [X] T010 [P] Update `specs/003-static-site-hosting/contracts/static-site.md` to describe the deterministic bucket and removal of the Composition-managed placeholder object.
 - [X] T011 [P] Update `specs/003-static-site-hosting/quickstart.md` to explain the bucket-identity change, workflow-owned content, and destructive recreation of the old `docs-demo` bucket without migration.
 - [X] T012 Run `kubectl apply --dry-run=server -f applications/crossplane-static-site-api.yaml` before applying the platform manifest, as required by `specs/006-site-repository-contract/quickstart.md`.
-- [ ] T013 Complete the single manual end-to-end run in `specs/006-site-repository-contract/quickstart.md`: verify discovery and deterministic `XStaticSite` status, run publication, then request the printed website URL and its `site.css` asset.
+- [X] T013 Complete the single manual end-to-end run in `specs/006-site-repository-contract/quickstart.md`: verify discovery and deterministic `XStaticSite` status, run publication, then request the printed website URL and its `site.css` asset.
 
 ## Dependencies & Execution Order
 
